@@ -815,3 +815,11 @@ textarea:focus {
     grid-row: 2;
   }
 }
+
+/* Turnstile shows here only when Cloudflare needs the visitor to click. */
+.turnstile-box {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 50;
+}

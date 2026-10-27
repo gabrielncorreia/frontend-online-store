@@ -23,6 +23,8 @@ An online store with real products from Mercado Livre, Brazil's largest marketpl
 
 Mercado Livre's public listing search now refuses requests without a token, and a token cannot live in a static site. The app calls a small Cloudflare Worker, [mercado-livre-proxy](https://github.com/gabrielncorreia/mercado-livre-proxy), which holds the credentials, talks to Mercado Livre's catalog API and returns only what the store needs.
 
+The proxy only answers the two apps. On the first request, the store passes an invisible Cloudflare Turnstile check and trades it for a 30-minute session token, sent with every request after that (`src/services/session.js`). A visitor sees the Turnstile box only if Cloudflare needs a click.
+
 ## Stack
 
 React with Hooks and the Context API for the cart, React Router, and the proxy above.
@@ -43,4 +45,4 @@ npm start     # app at http://localhost:3000
 npm test      # cart logic tests
 ```
 
-To build against a deployed proxy, set `REACT_APP_PROXY_URL` to its URL.
+To build against another proxy, set `REACT_APP_PROXY_URL` to its URL. `REACT_APP_TURNSTILE_SITE_KEY` overrides the Turnstile site key; development uses Cloudflare's test key, which the local proxy accepts.
