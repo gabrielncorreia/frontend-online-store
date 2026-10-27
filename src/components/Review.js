@@ -36,6 +36,9 @@ export default function Review({ productId }) {
   return (
     <section className="reviews" aria-labelledby="reviews-title">
       <h2 id="reviews-title">Avaliações</h2>
+      <p className="muted">
+        Sua avaliação fica salva só neste navegador. Ela não é publicada no Mercado Livre.
+      </p>
       <form className="review-form" onSubmit={ handleSubmit } noValidate>
         <label htmlFor="review-email" className="field">
           Email

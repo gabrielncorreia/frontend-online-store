@@ -16,7 +16,7 @@ An online store with real products from Mercado Livre, Brazil's largest marketpl
 - Prices in BRL, with the original price, discount and free shipping when Mercado Livre has them
 - Product page that also works from a shared link or after a reload
 - Cart with quantities, per-line and overall totals, and removal, saved in the browser
-- Reviews with a 1 to 5 star rating and an optional comment, stored per product
+- Reviews with a 1 to 5 star rating and an optional comment, stored per product in the browser only; nothing is published to Mercado Livre
 - Category list that turns into a scrollable row of chips on phones
 
 ## How it gets the data
