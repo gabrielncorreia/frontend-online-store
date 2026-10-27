@@ -1,6 +1,8 @@
 // Mercado Livre now refuses unauthenticated searches, so the app goes through a
 // small proxy (github.com/gabrielncorreia/mercado-livre-proxy) that holds the token.
-const API = process.env.REACT_APP_PROXY_URL || 'http://localhost:8799';
+const DEPLOYED = 'https://mercado-livre-proxy.gnc-apps-7.workers.dev';
+const API = process.env.REACT_APP_PROXY_URL
+  || (process.env.NODE_ENV === 'production' ? DEPLOYED : 'http://localhost:8799');
 
 async function get(path) {
   const response = await fetch(`${API}${path}`);
