@@ -1,9 +1,24 @@
-export async function getCategories() {
-  const request = await fetch('https://api.mercadolibre.com/sites/MLB/categories');
-  return request.json();
+// Mercado Livre now refuses unauthenticated searches, so the app goes through a
+// small proxy (github.com/gabrielncorreia/mercado-livre-proxy) that holds the token.
+const API = process.env.REACT_APP_PROXY_URL || 'http://localhost:8799';
+
+async function get(path) {
+  const response = await fetch(`${API}${path}`);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
 }
 
-export async function getProductsFromCategoryAndQuery(categoryId, query) {
-  const request = await fetch(`https://api.mercadolibre.com/sites/MLB/search?category=${categoryId}&q=${query}`);
-  return request.json();
+export function getCategories() {
+  return get('/categories');
+}
+
+export function getProductsFromCategoryAndQuery(categoryId = '', query = '') {
+  const params = new URLSearchParams();
+  if (query) params.set('q', query);
+  if (categoryId) params.set('category', categoryId);
+  return get(`/search?${params}`);
+}
+
+export function getProduct(id) {
+  return get(`/items/${encodeURIComponent(id)}`);
 }

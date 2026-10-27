@@ -1,81 +1,79 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { readCartItens } from '../services/cart';
-import ProductCart from './ProductCart';
+import { brl, useCart } from './CartContext';
 
-export default class Cart extends Component {
-  constructor() {
-    super();
-    this.state = {
-      cart: [],
-    };
-  }
+export default function Cart() {
+  const { cart, count, total, setQuantity } = useCart();
 
-  componentDidMount() {
-    this.readStorage();
-  }
-
-  componentDidUpdate() {
-    this.totalCart();
-  }
-
-  itensCount = (id) => {
-    const { cart } = this.state;
-    const itens = cart.filter((item) => item.id === id);
-
-    return itens.length;
-  }
-
-  readStorage = () => {
-    const cartItens = readCartItens();
-    this.setState({
-      cart: cartItens,
-    });
-  }
-
-  removeProduct = () => {
-    console.log('removeu!');
-  }
-
-  totalCart = () => {
-    const { cart } = this.state;
-    const allPrices = cart.map((product) => Number(product.price));
-    const totalPrices = allPrices
-      .reduce((prevValue, currentValue) => prevValue + currentValue, 0);
-
-    return totalPrices;
-  }
-
-  render() {
-    // console.log(this.state.cart);
-    // console.log(this.totalCart)
-    const { cart } = this.state;
+  if (cart.length === 0) {
     return (
-      <div className="cart-div">
-        <div className="cart-header">
-          <h2>Carrinho de compras</h2>
-          <Link to="/">Voltar à Home</Link>
-        </div>
-        <div className="cart-products-div">
-          {cart.length === 0
-            ? (
-              <h3 data-testid="shopping-cart-empty-message">
-                Seu carrinho está vazio
-              </h3>
-            ) : (
-              cart.map((item) => (
-                <div key={ item.id }>
-                  <ProductCart
-                    { ...item }
-                    totalPriceCallback={ () => {} }
-                  />
-                </div>
-              )))}
-        </div>
-        <div>
-          <h3>{`Total da compra: R$${this.totalCart()}`}</h3>
-        </div>
-      </div>
+      <main className="page cart-empty">
+        <h1>Carrinho</h1>
+        <p data-testid="shopping-cart-empty-message">Seu carrinho está vazio</p>
+        <Link to="/" className="button-primary">Buscar produtos</Link>
+      </main>
     );
   }
+
+  return (
+    <main className="page">
+      <h1 className="page-title">Carrinho</h1>
+      <div className="cart-layout">
+        <ul className="cart-list">
+          { cart.map((item) => (
+            <li key={ item.id } className="cart-line">
+              <Link to={ { pathname: `/product/${item.id}`, state: { product: item } } } className="cart-line-image">
+                <img src={ item.thumbnail } alt="" />
+              </Link>
+              <div className="cart-line-info">
+                <p data-testid="shopping-cart-product-name">{ item.title }</p>
+                <p className="muted">{ `${brl(item.price)} cada` }</p>
+              </div>
+              <div className="stepper" aria-label={ `Quantidade de ${item.title}` }>
+                <button
+                  type="button"
+                  data-testid="product-decrease-quantity"
+                  aria-label="Diminuir quantidade"
+                  disabled={ item.quantity <= 1 }
+                  onClick={ () => setQuantity(item.id, item.quantity - 1) }
+                >
+                  −
+                </button>
+                <span data-testid="shopping-cart-product-quantity">{ item.quantity }</span>
+                <button
+                  type="button"
+                  data-testid="product-increase-quantity"
+                  aria-label="Aumentar quantidade"
+                  onClick={ () => setQuantity(item.id, item.quantity + 1) }
+                >
+                  +
+                </button>
+              </div>
+              <p className="cart-line-total">{ brl(item.price * item.quantity) }</p>
+              <button
+                type="button"
+                className="link-button"
+                aria-label={ `Remover ${item.title}` }
+                onClick={ () => setQuantity(item.id, 0) }
+              >
+                Remover
+              </button>
+            </li>
+          )) }
+        </ul>
+        <aside className="summary">
+          <h2>Resumo</h2>
+          <p className="summary-row">
+            <span>{ `${count} ${count === 1 ? 'item' : 'itens'}` }</span>
+            <span>{ brl(total) }</span>
+          </p>
+          <p className="summary-row summary-total">
+            <span>Total</span>
+            <span>{ brl(total) }</span>
+          </p>
+          <Link to="/" className="button-secondary">Continuar comprando</Link>
+        </aside>
+      </div>
+    </main>
+  );
 }

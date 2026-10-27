@@ -1,7 +1,46 @@
-## Sobre o Projeto
-Esse foi o segundo projeto em grupo da Trybe. O objetivo dele era de construir um front-end para uma loja online utilizando uma API do Mercado Livre, fazendo o uso de React e de Metodologias Ágeis, como Kanban e Scrum.
+# Vitrine (Front-end Online Store)
 
+An online store with real products from Mercado Livre, Brazil's largest marketplace: browse categories, search, open a product, leave a review and manage a cart, with prices in Brazilian reais.
 
-### Preview
-![Alt text](images/preview.png)
-![Alt text](images/preview-2.png)
+**Live demo:** https://gabrielncorreia.github.io/frontend-online-store/
+
+![Search results](docs/search.png)
+
+| Product page | Cart on a phone |
+| --- | --- |
+| ![Product page](docs/product.png) | ![Cart](docs/cart-mobile.png) |
+
+## Features
+
+- Browse Mercado Livre's top-level categories, or search by text; each shows that category's best sellers
+- Prices in BRL, with the original price, discount and free shipping when Mercado Livre has them
+- Product page that also works from a shared link or after a reload
+- Cart with quantities, per-line and overall totals, and removal, saved in the browser
+- Reviews with a 1 to 5 star rating and an optional comment, stored per product
+- Category list that turns into a scrollable row of chips on phones
+
+## How it gets the data
+
+Mercado Livre's public listing search now refuses requests without a token, and a token cannot live in a static site. The app calls a small Cloudflare Worker, [mercado-livre-proxy](https://github.com/gabrielncorreia/mercado-livre-proxy), which holds the credentials, talks to Mercado Livre's catalog API and returns only what the store needs.
+
+## Stack
+
+React with Hooks and the Context API for the cart, React Router, and the proxy above.
+
+## About the project
+
+Built as a group project at [Trybe](https://www.betrybe.com/), working in agile sprints with Kanban and Scrum.
+
+In 2026 I moved it to the proxy after Mercado Livre closed its public search, redesigned the interface and fixed bugs: the product page crashed when opened directly, the cart stored a duplicate entry per unit instead of a quantity, "Remove" did nothing, the total ignored quantity changes, and reviews were shared across every product.
+
+## Running locally
+
+Requires Node.js and the proxy running locally (see its README), which serves on `http://localhost:8799` by default. From the project folder:
+
+```sh
+npm install
+npm start     # app at http://localhost:3000
+npm test      # cart logic tests
+```
+
+To build against a deployed proxy, set `REACT_APP_PROXY_URL` to its URL.

@@ -1,29 +1,25 @@
-import React, { Component } from 'react';
-import { FaShoppingCart } from 'react-icons/fa';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { FaShoppingBag } from 'react-icons/fa';
+import { useCart } from './CartContext';
 
-export default class Header extends Component {
-  render() {
-    return (
-      <div className="header-div">
-        <h2>Loja do Grupo 02</h2>
-
-        <div className="search-cart-div">
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Digite o nome de uma categoria ou produto"
-          />
-          <Link
-            to="/cart"
-            data-testid="shopping-cart-button"
-          >
-            <FaShoppingCart
-              className="shopping-cart-icon"
-            />
-          </Link>
-        </div>
+export default function Header() {
+  const { count } = useCart();
+  return (
+    <header className="topbar">
+      <div className="topbar-inner">
+        <Link to="/" className="brand">Vitrine</Link>
+        <Link
+          to="/cart"
+          className="cart-link"
+          data-testid="shopping-cart-button"
+          aria-label={ `Carrinho, ${count} ${count === 1 ? 'item' : 'itens'}` }
+        >
+          <FaShoppingBag aria-hidden="true" />
+          <span>Carrinho</span>
+          { count > 0 && <span className="badge" data-testid="shopping-cart-size">{ count }</span> }
+        </Link>
       </div>
-    );
-  }
+    </header>
+  );
 }

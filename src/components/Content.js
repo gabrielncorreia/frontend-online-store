@@ -1,156 +1,121 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import Input from './Input';
+import React, { useEffect, useState } from 'react';
 import { getCategories, getProductsFromCategoryAndQuery } from '../services/api';
-import { saveCartItens, readCartItens } from '../services/cart';
+import ProductCard from './ProductCard';
 
-class Content extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      inputSearch: '',
-      category: '',
-      itemList: [],
-      categories: [],
-      cart: [],
-    };
-  }
+const SUGGESTIONS = ['celular', 'notebook', 'fone de ouvido', 'geladeira', 'tênis'];
 
-  componentDidMount() {
-    this.getFromApi();
-    this.readStorage();
-  }
+export default function Content() {
+  const [categories, setCategories] = useState([]);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('');
+  const [results, setResults] = useState(null);
+  const [heading, setHeading] = useState('');
+  const [status, setStatus] = useState('idle'); // idle | loading | error
 
-  readStorage = () => {
-    const cartItem = readCartItens();
-    if (!cartItem) {
-      saveCartItens([]);
-    } else {
-      this.setState({
-        cart: cartItem,
-      });
+  useEffect(() => {
+    getCategories().then(setCategories).catch(() => setCategories([]));
+  }, []);
+
+  const load = async (term, categoryId, title) => {
+    setStatus('loading');
+    setHeading(title);
+    try {
+      const data = await getProductsFromCategoryAndQuery(categoryId, term);
+      setResults(data.results);
+      setStatus('idle');
+    } catch {
+      setStatus('error');
     }
-  }
-
-  getFromApi = async () => {
-    const data = await getCategories();
-    this.setState({ categories: data });
-  }
-
-  handleChange = ({ target }) => {
-    this.setState({
-      inputSearch: target.value,
-    });
-  }
-
-  handleCategory = ({ target }) => {
-    this.setState({
-      inputSearch: '',
-      category: target.value,
-    }, this.handleButton);
-  }
-
-  handleButton = async () => {
-    const { inputSearch, category } = this.state;
-    const itens = await getProductsFromCategoryAndQuery(category, inputSearch);
-    const { results } = itens;
-    this.setState({
-      itemList: results,
-    });
-  }
-
-  handleCart = ({ target }) => {
-    const { itemList } = this.state;
-    const carrinho = itemList.find((item) => item.id === target.id);
-    this.setState(
-      (prev) => ({ cart: [...prev.cart, carrinho] }),
-      () => {
-        const { cart } = this.state;
-        saveCartItens(cart);
-      },
-    );
   };
 
-  render() {
-    const { itemList, categories } = this.state;
-    return (
-      <div className="content-div">
-        <div className="categories">
-          <h3>Categorias:</h3>
-          { categories.map((category) => (
-            <label htmlFor={ category.id } key={ category.id }>
-              <input
-                type="radio"
-                data-testid="category"
-                name="category"
-                id={ category.id }
-                value={ category.id }
-                onChange={ this.handleCategory }
-              />
-              { category.name }
-            </label>
-          )) }
-        </div>
-        <div className="input-products-div">
-          <div className="input-div">
-            <Input
-              handleChange={ this.handleChange }
-              value={ this.inputSearch }
-              handleButton={ this.handleButton }
-            />
-          </div>
-          <div className="all-products-div">
-            {itemList.length === 0
-              ? (
-                <p
-                  data-testid="home-initial-message"
-                >
-                  Digite algum termo de pesquisa ou escolha uma categoria.
-                </p>)
-              : (
-                itemList.map((item) => (
-                  <div key={ item.id }>
-                    <Link
-                      to={ { pathname: `/product/${item.id}`,
-                        state: {
-                          product: { ...item },
-                          name: item.title,
-                          img: item.thumbnail,
-                          price: item.price,
-                        },
-                      } }
-                      data-testid="product-detail-link"
-                    >
-                      <div
-                        data-testid="product"
-                        className="product-div"
-                        key={ item.id }
-                      >
-                        <div className="product-name">
-                          <h5>{ item.title }</h5>
-                        </div>
-                        <div className="product-img">
-                          <img src={ item.thumbnail } alt={ item.title } />
-                          <p className="product-price">{ `R$${item.price}` }</p>
-                        </div>
-                      </div>
-                    </Link>
-                    <button
-                      data-testid="product-add-to-cart"
-                      type="button"
-                      onClick={ this.handleCart }
-                      id={ item.id }
-                    >
-                      Adicionar ao carrinho
-                    </button>
-                  </div>
-                )))}
-          </div>
-          <div />
-        </div>
-      </div>
-    );
-  }
-}
+  const searchFor = (term) => {
+    const trimmed = term.trim();
+    if (!trimmed) return;
+    setQuery(trimmed);
+    setCategory('');
+    load(trimmed, '', `Resultados para "${trimmed}"`);
+  };
 
-export default Content;
+  const pickCategory = ({ id, name }) => {
+    setQuery('');
+    setCategory(id);
+    load('', id, name);
+  };
+
+  return (
+    <main className="home">
+      <form
+        className="search"
+        role="search"
+        onSubmit={ (event) => { event.preventDefault(); searchFor(query); } }
+      >
+        <label htmlFor="query-input" className="visually-hidden">Buscar produtos</label>
+        <input
+          id="query-input"
+          type="search"
+          placeholder="Buscar produtos, marcas e mais"
+          value={ query }
+          data-testid="query-input"
+          onChange={ ({ target }) => setQuery(target.value) }
+        />
+        <button type="submit" className="button-primary" data-testid="query-button">Buscar</button>
+      </form>
+
+      <div className="home-layout">
+        <nav className="categories" aria-label="Categorias">
+          <h2>Categorias</h2>
+          <ul>
+            { categories.map((item) => (
+              <li key={ item.id }>
+                <label htmlFor={ item.id } className={ category === item.id ? 'is-active' : '' }>
+                  <input
+                    type="radio"
+                    data-testid="category"
+                    name="category"
+                    id={ item.id }
+                    value={ item.id }
+                    checked={ category === item.id }
+                    onChange={ () => pickCategory(item) }
+                  />
+                  { item.name }
+                </label>
+              </li>
+            )) }
+          </ul>
+        </nav>
+
+        <section className="results" aria-live="polite" aria-busy={ status === 'loading' }>
+          { results === null && status === 'idle' && (
+            <div className="welcome" data-testid="home-initial-message">
+              <h1>Produtos reais do Mercado Livre, com preços em reais</h1>
+              <p>Busque um produto ou escolha uma categoria. Mostramos os mais vendidos de cada categoria.</p>
+              <div className="suggestions">
+                { SUGGESTIONS.map((term) => (
+                  <button key={ term } type="button" onClick={ () => searchFor(term) }>{ term }</button>
+                )) }
+              </div>
+            </div>
+          ) }
+
+          { status === 'loading' && <p className="status">Buscando produtos...</p> }
+          { status === 'error' && (
+            <p className="status">Não foi possível carregar os produtos. Tente de novo em alguns segundos.</p>
+          ) }
+
+          { results !== null && status === 'idle' && (
+            <>
+              <h1 className="results-heading">{ heading }</h1>
+              { results.length === 0 ? (
+                <p className="status">Nenhum produto encontrado. Tente outra palavra ou escolha uma categoria.</p>
+              ) : (
+                <div className="product-grid">
+                  { results.map((product) => <ProductCard key={ product.id } product={ product } />) }
+                </div>
+              ) }
+            </>
+          ) }
+        </section>
+      </div>
+    </main>
+  );
+}

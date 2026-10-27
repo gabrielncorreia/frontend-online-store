@@ -1,87 +1,84 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { FaShoppingCart } from 'react-icons/fa';
+import { getProduct } from '../services/api';
+import { useCart } from './CartContext';
+import Price from './Price';
 import Review from './Review';
-import SavedReviews from './SavedReviews';
-import { saveCartItens, readCartItens } from '../services/cart';
 
-export default class Product extends Component {
-  constructor() {
-    super();
-    this.state = {
-      cart: [],
-    };
-  }
+export default function Product({ match: { params: { id } }, location }) {
+  const fromList = location.state && location.state.product;
+  const [product, setProduct] = useState(fromList || null);
+  const [status, setStatus] = useState(fromList ? 'ready' : 'loading');
+  const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
+  const { add } = useCart();
 
-  componentDidMount() {
-    this.readStorage();
-  }
+  // Opened from a shared link or after a reload: there is no list data, so fetch it.
+  useEffect(() => {
+    if (fromList) return;
+    getProduct(id)
+      .then((data) => { setProduct(data); setStatus('ready'); })
+      .catch(() => setStatus('error'));
+  }, [id, fromList]);
 
-  readStorage = () => {
-    const cartItem = readCartItens();
-    if (!cartItem) {
-      saveCartItens([]);
-    } else {
-      this.setState({
-        cart: cartItem,
-      });
-    }
-  }
-
-  handleCart = () => {
-    const { location: { state: { product } } } = this.props;
-    this.setState(
-      (prev) => ({ cart: [...prev.cart, product] }),
-      () => {
-        const { cart } = this.state;
-        saveCartItens(cart);
-      },
-    );
-  };
-
-  render() {
-    const { location: { state: { name, img, price, product } } } = this.props;
+  if (status === 'loading') return <main className="page"><p className="status">Carregando produto...</p></main>;
+  if (status === 'error') {
     return (
-      <div className="single-product-page">
-        {/* <h2>Esse é o container do Produto</h2> */}
-        <Link to="/">Voltar à Home</Link>
-        <Link
-          data-testid="shopping-cart-button"
-          to="/cart"
-        >
-          <FaShoppingCart
-            className="shopping-cart-icon"
-          />
-        </Link>
-
-        <div className="single-product-detail">
-          <h3 data-testid="product-detail-name">{ name }</h3>
-          <img src={ img } alt="" />
-          <h4>{ price }</h4>
-        </div>
-        <button
-          data-testid="product-detail-add-to-cart"
-          type="button"
-          onClick={ this.handleCart }
-          id={ product.id }
-        >
-          Adiconar ao carrinho
-        </button>
-        <Review />
-        <SavedReviews />
-      </div>
+      <main className="page">
+        <p className="status">Produto não encontrado ou sem oferta ativa.</p>
+        <Link to="/" className="back-link">Voltar para a busca</Link>
+      </main>
     );
   }
+
+  return (
+    <main className="page">
+      <Link to="/" className="back-link">Voltar para a busca</Link>
+      <article className="product-detail">
+        <div className="product-detail-image">
+          <img src={ product.thumbnail } alt={ product.title } />
+        </div>
+        <div className="product-detail-info">
+          <h1 data-testid="product-detail-name">{ product.title }</h1>
+          <Price product={ product } large />
+          <div className="buy-row">
+            <div className="stepper" aria-label="Quantidade">
+              <button
+                type="button"
+                aria-label="Diminuir quantidade"
+                disabled={ quantity <= 1 }
+                onClick={ () => setQuantity(quantity - 1) }
+              >
+                −
+              </button>
+              <span aria-live="polite">{ quantity }</span>
+              <button type="button" aria-label="Aumentar quantidade" onClick={ () => setQuantity(quantity + 1) }>+</button>
+            </div>
+            <button
+              type="button"
+              className="button-primary"
+              data-testid="product-detail-add-to-cart"
+              onClick={ () => { add(product, quantity); setAdded(true); } }
+            >
+              Adicionar ao carrinho
+            </button>
+          </div>
+          { added && (
+            <p className="added-note" role="status">
+              Adicionado ao carrinho.
+              { ' ' }
+              <Link to="/cart">Ver carrinho</Link>
+            </p>
+          ) }
+        </div>
+      </article>
+      <Review productId={ product.id } />
+    </main>
+  );
 }
 
 Product.propTypes = {
-  location: PropTypes.shape({
-    state: PropTypes.shape({
-      name: PropTypes.string.isRequired,
-      img: PropTypes.string.isRequired,
-      price: PropTypes.number.isRequired,
-      product: PropTypes.objectOf(PropTypes.string).isRequired,
-    }),
-  }).isRequired,
+  match: PropTypes.shape({ params: PropTypes.shape({ id: PropTypes.string }) }).isRequired,
+  location: PropTypes.shape({ state: PropTypes.shape({ product: PropTypes.object }) }).isRequired,
 };
