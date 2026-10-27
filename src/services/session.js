@@ -4,7 +4,7 @@
 
 // Turnstile site keys are public. Development uses Cloudflare's test key, which
 // always passes and only works against the proxy's test secret.
-const PRODUCTION_SITE_KEY = 'TURNSTILE_SITE_KEY';
+const PRODUCTION_SITE_KEY = '0x4AAAAAAFoy4_oGWMzKWrc1';
 const TEST_SITE_KEY = '1x00000000000000000000AA';
 const SITE_KEY = process.env.REACT_APP_TURNSTILE_SITE_KEY
   || (process.env.NODE_ENV === 'production' ? PRODUCTION_SITE_KEY : TEST_SITE_KEY);
